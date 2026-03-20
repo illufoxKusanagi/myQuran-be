@@ -185,4 +185,4 @@ const app = new Elysia()
 
 console.log(`📖 Quran API running at http://localhost:${app.server?.port}`);
 
-// export default app;
+export default app;

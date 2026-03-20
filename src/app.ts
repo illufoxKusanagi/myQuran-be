@@ -7,6 +7,13 @@ import { cors } from "@elysiajs/cors";
 
 export const app = new Elysia()
   .use(cors())
+  .get("/", () => {
+    return {
+      message: "Quran API is running",
+      endpoints: ["/surah", "/surah/:id", "/ayah/:surahId"],
+    };
+  })
+  .get("/favicon.ico", () => new Response(null, { status: 204 }))
   .get(
     "/surah",
     async () => {

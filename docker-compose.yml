@@ -1,0 +1,19 @@
+services:
+  
+  postgres:
+    image: postgres:16-alpine
+    container_name: quran-db
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    env_file:
+      - .env
+    environment:
+      POSTGRES_DB: quran_db
+      POSTGRES_USER: quran
+      POSTGRES_PASSWORD: quran
+    volumes:
+      - quran_pgdata:/var/lib/postgresql/data
+
+volumes:
+  quran_pgdata:

@@ -1,0 +1,34 @@
+{
+  "name": "quran-backend",
+  "version": "1.0.50",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "bun run --watch src/index.ts",
+    "scrape": "bun run src/scraper.ts",
+    "scrape:server": "bun run src/scraper-server.ts",
+    "db:generate": "bunx drizzle-kit generate",
+    "db:migrate": "bunx drizzle-kit migrate",
+    "db:push": "bunx drizzle-kit push",
+    "db:pull": "bunx drizzle-kit pull",
+    "db:studio": "bunx drizzle-kit studio",
+    "seed": "bun run src/seed.ts"
+  },
+  "dependencies": {
+    "@elysiajs/cors": "^1.4.1",
+    "@paralleldrive/cuid2": "^3.3.0",
+    "@sinclair/typebox": "^0.34.48",
+    "drizzle-orm": "^0.45.1",
+    "drizzle-typebox": "^0.3.3",
+    "elysia": "latest",
+    "pg": "^8.20.0",
+    "postgres": "^3.4.8"
+  },
+  "devDependencies": {
+    "bun-types": "latest",
+    "drizzle-kit": "^0.31.9"
+  },
+  "module": "src/index.js",
+  "overrides": {
+    "@sinclair/typebox": "^0.34.48"
+  }
+}

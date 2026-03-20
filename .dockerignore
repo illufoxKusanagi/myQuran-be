@@ -1,0 +1,40 @@
+# ─── The Dockerfile COPYs only: package.json, bun.lock, tsconfig.json ───
+# Everything else is excluded from Docker build context to keep images lean.
+
+# Source (not copied in Dockerfile — mounted as volume in dev)
+src/
+
+# Dependencies (installed fresh inside container)
+node_modules/
+
+# Build artifacts
+dist/
+
+# Drizzle generated migrations
+drizzle/
+
+# Data files
+data/
+
+# Env files (injected at runtime via docker-compose)
+.env
+.env.local
+.env.*.local
+
+# Logs
+*.log
+logs/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Git
+.git/
+.gitignore
+
+# Docs / extras
+*.md
+README*

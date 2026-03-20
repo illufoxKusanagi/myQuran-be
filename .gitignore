@@ -1,0 +1,15 @@
+.env
+.env.local
+.env.*.local
+.env.development
+.env.production
+.env.test
+node_modules/
+.pnp
+.pnp.js
+bun.lock
+package-lock.json
+yarn.lock
+data/
+drizzle/
+scrapper/

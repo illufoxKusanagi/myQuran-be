@@ -252,3 +252,5 @@ export const app = new Elysia()
       response: t.Any(),
     },
   );
+
+export default app;

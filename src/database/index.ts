@@ -2,11 +2,24 @@ import { drizzle } from "drizzle-orm/postgres-js";
 import * as schema from "./schema";
 import postgres from "postgres";
 
-// export const database = drizzle(process.env.DATABASE_URL!, { schema });
+let _database: ReturnType<typeof drizzle> | null = null;
 
-const connectionString = process.env.DATABASE_URL!;
+export function getDatabase() {
+  if (_database) return _database;
 
-// prepare: false is required for Supabase Transaction pooler (pgBouncer)
-const client = postgres(connectionString, { prepare: false });
+  const connectionString = process.env.DATABASE_URL;
+  if (!connectionString) {
+    throw new Error("DATABASE_URL environment variable is not set");
+  }
 
-export const database = drizzle(client, { schema });
+  try {
+    // prepare: false is required for Supabase Transaction pooler (pgBouncer)
+    const client = postgres(connectionString, { prepare: false });
+    _database = drizzle(client, { schema });
+    return _database;
+  } catch (error) {
+    throw new Error(
+      `Failed to initialize database: ${error instanceof Error ? error.message : String(error)}`,
+    );
+  }
+}

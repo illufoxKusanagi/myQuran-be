@@ -1,6 +1,6 @@
-import { drizzle } from "drizzle-orm/postgres-js";
-import * as schema from "./schema";
-import postgres from "postgres";
+import { drizzle } from 'drizzle-orm/postgres-js';
+import * as schema from './schema';
+import postgres from 'postgres';
 
 let _database: ReturnType<typeof drizzle> | null = null;
 
@@ -9,7 +9,7 @@ export function getDatabase() {
 
   const connectionString = process.env.DATABASE_URL;
   if (!connectionString) {
-    throw new Error("DATABASE_URL environment variable is not set");
+    throw new Error('DATABASE_URL environment variable is not set');
   }
 
   try {
@@ -19,7 +19,7 @@ export function getDatabase() {
     return _database;
   } catch (error) {
     throw new Error(
-      `Failed to initialize database: ${error instanceof Error ? error.message : String(error)}`,
+      `Failed to initialize database: ${error instanceof Error ? error.message : String(error)}`
     );
   }
 }

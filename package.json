@@ -4,8 +4,10 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "bun run --watch src/index.ts",
-    "scrape": "bun run src/scraper.ts",
-    "scrape:server": "bun run src/scraper-server.ts",
+    "scrape": "bun run src/scrapper/scraper.ts",
+    "scrape:server": "bun run src/scrapper/scraper-server.ts",
+    "scrape:pages": "bun run src/scrapper/scrape-pages.ts",
+    "scrape:hadith": "bun run src/scrapper/scrape-hadith.ts",
     "db:generate": "bunx drizzle-kit generate",
     "db:migrate": "bunx drizzle-kit migrate",
     "db:push": "bunx drizzle-kit push",

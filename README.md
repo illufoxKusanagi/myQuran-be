@@ -1,51 +1,113 @@
-# Quran Backend API
+# 📖 myQuran Backend API
 
-A complete, self-hosted backend solving the common issues of integrating Quranic data into modern web applications built on Elysia.JS
+A high-performance, self-hosted backend delivering complete **Quranic text, Tafsir, Mushaf page images, Audio recitation streaming, and Hadith collections** built with **Bun**, **Elysia.js**, and **Drizzle ORM** on **PostgreSQL**.
 
-## Project Background & Features
+---
 
-This project was built to provide a reliable, fast, and feature-complete backend for a Quran app. It tackles several challenges:
+## 🌟 Key Features
 
-1. **Bypassing Kemenag API Restrictions**: The official Indonesian Ministry of Religion (Kemenag) API blocks direct terminal and cross-origin browser requests (CORS/403 errors). This project includes a custom proxy scraper (`src/scraper-server.ts`) that successfully masks requests, scraping all 114 surahs, 6,236 ayahs, and Indonesian Tafsir (Wajiz & Tahlili).
-2. **Audio Integration (`everyayah.com`)**: Storing thousands of audio files in a database is inefficient. This backend stores metadata for 15+ popular reciters and provides a simple, deterministic approach for frontends to construct EveryAyah audio URLs on the fly for both partial (per-ayah) and complete (full surah) playback.
-3. **High-Performance Stack**: Built with ElysiaJS (one of the fastest Bun frameworks) and Drizzle ORM on PostgreSQL for type-safe, sub-millisecond database queries.
+1. **Complete Quran & Indonesian Tafsir**:
+   - All **114 Surahs** and **6,236 Ayahs**.
+   - Arabic text (Kemenag standard), Latin transliteration, Indonesian translation, and footnotes.
+   - Dual Tafsir: **Tafsir Wajiz** (concise) & **Tafsir Tahlili** (comprehensive).
 
-## Prerequisites
+2. **Mushaf Standar Indonesia Page Images**:
+   - All **604 page images** (`QK_001.webp` to `QK_604.webp`) scraped directly from Kemenag CDN.
+   - Metadata endpoint (`/page/:pageNumber`) mapping each page to its verses + cached image serving (`/page/:pageNumber/image`).
 
-- [Bun](https://bun.sh)
-- [Docker](https://www.docker.com)
+3. **7 Major Hadith Collections (*Kutubut Tis'ah*)**:
+   - **29,187 Hadiths** scraped from `hadits.id` covering Bukhari, Muslim, Abu Dawud, At-Tirmidzi, An-Nasa'i, Ibnu Majah, and Musnad Ahmad.
+   - Arabic text, Latin transliteration, Indonesian translation, Kitab & Bab classification, and authenticity grade (*Shahih*, *Hasan*, etc.).
+   - Fast paginated browsing, chapter filtering, and "Random Hadith of the Day" support.
 
-## Quick Start
+4. **Recitation Audio Engine (`everyayah.com`)**:
+   - Catalog of 40+ verified Quran reciters (Mishary Al-Afasy, Sudais, Ghamadi, Abdul Basit, Al-Husary, etc.) at 128kbps+.
+   - Deterministic audio URLs for both single verse playback and full surah playlists.
 
+5. **Blazing Fast Performance**:
+   - Powered by **Bun** and **ElysiaJS** with sub-millisecond route handling.
+   - Fully type-safe schemas validated via **TypeBox** and **Drizzle ORM**.
+
+---
+
+## 🛠 Tech Stack
+
+- **Runtime**: [Bun](https://bun.sh)
+- **Framework**: [ElysiaJS](https://elysiajs.com)
+- **Database**: [PostgreSQL 16](https://www.postgresql.org)
+- **ORM**: [Drizzle ORM](https://orm.drizzle.team)
+- **Validation**: [TypeBox](https://github.com/sinclairzx81/typebox) via `drizzle-typebox`
+- **Containerization**: Docker & Docker Compose
+
+---
+
+## 🚀 Quick Start
+
+### 1. Start Database
 ```bash
-# 1. Start PostgreSQL Database
 docker compose up -d
+```
+*PostgreSQL will be running on `localhost:5432` with database `quran_db`.*
 
-# 2. Install dependencies
+### 2. Install Dependencies
+```bash
 bun install
-
-# 3. Push schema to database
-bun run db:push
-
-# 4. Seed all Quran data (114 surahs, 6236 ayahs, tafsir, 15 reciters)
-bun run seed
-
-# 5. Start dev server
-bun run dev
 ```
 
-The API will be running at `http://localhost:3000`.
+### 3. Push Database Schema
+```bash
+bun run db:push
+```
 
-## API Documentation
+### 4. Seed Database
+```bash
+bun run seed
+```
+*Seeds all 114 Surahs, 6,236 Ayahs (with footnotes & tafsir), 40 Reciters, and 29,187 Hadiths.*
 
-### Surah Endpoints
+### 5. Start Development Server
+```bash
+bun run dev
+```
+The API is live at **`http://localhost:3000`**.
 
-#### 1. List All Surahs
+### 6. Run Integration Test Suite
+```bash
+bun test
+```
+*Executes all 20 end-to-end integration tests verifying Quran, Hadith, Mushaf, and Audio endpoints.*
 
-- **Method**: `GET`
-- **Path**: `/surah`
-- **Response**:
+---
 
+## ⚙️ Scraper Commands
+
+All scrapers include automatic rate limiting, retry backoff, and local caching to `data/`:
+
+| Command | Description |
+| :--- | :--- |
+| `bun run scrape` | Scrape surahs, ayahs, footnotes, and tafsir from Kemenag |
+| `bun run scrape:pages` | Scrape all 604 Mushaf WebP page images into `data/pages/` |
+| `bun run scrape:hadith --book bukhari` | Scrape specific Hadith collection (e.g. `bukhari`, `muslim`, `abudawud`) |
+| `bun run scrape:hadith --all` | Scrape all 7 Hadith collections |
+| `bun run seed` | Batch-insert all scraped Quran and Hadith data into PostgreSQL |
+
+---
+
+## 📚 API Reference
+
+> 📱 **Looking for frontend integration?**  
+> Check out the complete [**Frontend Integration Guide (`API_FRONTEND_GUIDE.md`)**](./API_FRONTEND_GUIDE.md) containing ready-to-use TypeScript interfaces, Eden Treaty client setup, search parameters, and bandwidth reduction best practices.
+
+- **Base URL**: `http://localhost:3000`
+- **CORS**: Enabled (`*`)
+- **Pagination Headers**: `X-Total-Count`, `X-Total-Pages`, `X-Current-Page`, `X-Per-Page`
+
+### 1. Surah Endpoints
+
+#### `GET /surah`
+List all 114 Surahs with metadata.
+
+**Response `200 OK`**:
 ```json
 [
   {
@@ -58,26 +120,71 @@ The API will be running at `http://localhost:3000`.
     "numAyah": 7,
     "page": 1,
     "location": "Makkiyah",
-    "createdAt": "2026-03-17T03:09:37.193Z",
-    "updatedAt": "2026-03-17T03:09:37.193Z"
+    "createdAt": "2026-09-02T12:00:00.000Z",
+    "updatedAt": "2026-09-02T12:00:00.000Z"
   }
 ]
 ```
 
-#### 2. Get Single Surah
+#### `GET /surah/:id`
+Get metadata for a single Surah by ID (1–114).
 
-- **Method**: `GET`
-- **Path**: `/surah/:id`
-- **Response**: Single surah object.
+---
 
-### Ayah & Tafsir Endpoints
+### 2. Ayah & Tafsir Endpoints
 
-#### 3. Get All Ayahs in a Surah
+#### `GET /ayah/search`
+Search Quran verses by translation keyword, Latin transliteration, or Arabic text across all 6,236 verses.
 
-- **Method**: `GET`
-- **Path**: `/ayah/:surahId`
-- **Response**:
+- **Query Parameters**:
+  - `q` *(required)*: Search keyword (e.g. `?q=sedekah`, `?q=puasa`)
+  - `surah` *(optional)*: Filter by Surah ID (1–114)
+  - `page` *(optional, default: 1)*: Page number
+  - `limit` *(optional, default: 20, max: 100)*: Items per page
+  - `withTafsir` *(optional, default: false)*: Include Wajiz & Tahlili tafsir in search results
 
+**Response `200 OK`**:
+```json
+{
+  "query": "sedekah",
+  "pagination": {
+    "page": 1,
+    "limit": 20,
+    "total": 17,
+    "totalPages": 1,
+    "hasNext": false,
+    "hasPrev": false
+  },
+  "results": [
+    {
+      "id": 203,
+      "surahId": 2,
+      "surahName": "Al-Baqarah",
+      "surahLatin": "Al-Baqarah",
+      "surahArabic": "البقرة",
+      "ayahNumber": 196,
+      "page": 30,
+      "juz": 2,
+      "arabic": "وَأَتِمُّوا الْحَجَّ وَالْعُمْرَةَ لِلَّهِ...",
+      "latin": "Wa atimmul-ḥajja wal-'umrata lillāh(i)...",
+      "translation": "...maka wajib berfidyah, yaitu berpuasa, bersedekah, atau berkurban..."
+    }
+  ]
+}
+```
+
+#### `GET /ayah/:surahId`
+Get Ayahs for a given Surah with optional pagination, range filtering, and Tafsir projection.
+
+- **Query Parameters**:
+  - `page` *(optional)*: Page number for paginated reading
+  - `limit` *(optional, max: 100)*: Items per page (e.g. `?page=1&limit=20`)
+  - `from` *(optional)*: Start verse number (e.g. `?from=1`)
+  - `to` *(optional)*: End verse number (e.g. `?to=20`)
+  - `withTafsir` *(optional, default: true)*: Set to `false` to omit heavy `wajizTafsir` and `tahliliTafsir`, reducing JSON payload by **~70%**.
+  - `paginate` *(optional, default: false)*: Set to `true` to return `{ pagination, ayahs }` envelope. When `false` (default), returns array directly with pagination headers (`X-Total-Count`, `X-Total-Pages`, `X-Current-Page`).
+
+**Response `200 OK`**:
 ```json
 [
   {
@@ -86,137 +193,343 @@ The API will be running at `http://localhost:3000`.
     "ayahNumber": 1,
     "page": 1,
     "juz": 1,
-    "arabic": "بِسْمِ اللّٰهِ الرَّحْمٰنِ الرَّحِيْمِ",
-    "latin": "Bismillāhir-raḥmānir-raḥīm(i). ",
+    "arabic": "بِسْمِ اللّٰهِ الرَّحْمٰنِ الرَّحِيْمِ",
+    "latin": "Bismillāhir-raḥmānir-raḥīm(i).",
     "translation": "Dengan nama Allah Yang Maha Pengasih lagi Maha Penyayang.",
-    "wajizTafsir": "Aku memulai bacaan Al-Qur'an...",
-    "tahliliTafsir": "Surah al-Fātiḥah dimulai dengan...",
-    "createdAt": "2026-03-17T03:09:37.260Z",
-    "updatedAt": "2026-03-17T03:09:37.260Z"
+    "footnote": null,
+    "wajizTafsir": "Aku memulai bacaan Al-Qur'an dengan menyebut nama Allah...",
+    "tahliliTafsir": "Surah al-Fātiḥah dimulai dengan basmalah...",
+    "createdAt": "2026-09-02T12:00:00.000Z",
+    "updatedAt": "2026-09-02T12:00:00.000Z"
   }
 ]
 ```
 
-#### 4. Get Tafsir for Specific Ayah
+#### `GET /ayah/:surahId/:ayahNumber/tafsir`
+Get concise (*Wajiz*) and in-depth (*Tahlili*) Tafsir for a specific verse.
 
-- **Method**: `GET`
-- **Path**: `/ayah/:surahId/:ayahNumber/tafsir`
-- **Response**:
-
-```json
-{
-  "ayahNumber": 1,
-  "wajizTafsir": "Aku memulai bacaan Al-Qur'an...",
-  "tahliliTafsir": "Surah al-Fātiḥah dimulai dengan..."
-}
-```
-
-### Reciter & Audio Endpoints
-
-> **Note**: Audio files are not stored in the database. The backend constructs the MP3 URL using the EveryAyah CDN format. You can use the `/audio` endpoints to get the correct URLs for streaming.
-
-#### 5. Get Audio for Full Surah (Playlist)
-
-- **Method**: `GET`
-- **Path**: `/audio/surah/:surahId?reciterId=3`
-- **Query Params**: `reciterId` (optional, defaults to 3 for Alafasy)
-- **Response**: Array of audio URLs for the entire surah.
-
+**Response `200 OK`**:
 ```json
 {
   "surahId": 1,
-  "reciterId": 3,
-  "audioUrls": [
-    "https://everyayah.com/data/Alafasy_128kbps/001001.mp3",
-    "https://everyayah.com/data/Alafasy_128kbps/001002.mp3"
-    // ...
+  "ayahNumber": 1,
+  "wajiz": "Aku memulai bacaan Al-Qur'an dengan menyebut nama Allah...",
+  "tahlili": "Surah al-Fātiḥah dimulai dengan basmalah..."
+}
+```
+
+---
+
+### 3. Mushaf Page Endpoints
+
+#### `GET /page/:pageNumber`
+Get metadata, list of verses, and image URLs for a Mushaf page (1–604).
+
+**Response `200 OK`**:
+```json
+{
+  "pageNumber": 1,
+  "imageUrl": "/page/1/image",
+  "kemenagCdnUrl": "https://media.qurankemenag.net/khat2/QK_001.webp",
+  "totalVerses": 7,
+  "surahs": [
+    { "id": 1, "name": "Al-Fātiḥah" }
+  ],
+  "verses": [
+    {
+      "id": 1,
+      "surahId": 1,
+      "surahName": "Al-Fātiḥah",
+      "ayahNumber": 1,
+      "juz": 1,
+      "arabic": "بِسْمِ اللّٰهِ الرَّحْمٰنِ الرَّحِيْمِ",
+      "translation": "Dengan nama Allah Yang Maha Pengasih lagi Maha Penyayang."
+    }
   ]
 }
 ```
 
-#### 6. Get Audio for Single Ayah
+#### `GET /page/:pageNumber/image`
+Serves the local high-resolution Mushaf page image (`data/pages/QK_XXX.webp`) or redirects to Kemenag CDN.
 
-- **Method**: `GET`
-- **Path**: `/audio/ayah/:surahId/:ayahNumber?reciterId=3`
-- **Query Params**: `reciterId` (optional, defaults to 3 for Alafasy)
-- **Response**:
+---
 
-```json
-{
-  "surahId": 1,
-  "ayahNumber": 1,
-  "reciterId": 3,
-  "audioUrl": "https://everyayah.com/data/Alafasy_128kbps/001001.mp3"
-}
-```
+### 4. Hadith Endpoints
 
-### Reciter Endpoints
+#### `GET /hadith/books`
+List all 7 Hadith collections with real-time available counts.
 
-#### 7. List All Reciters
-
-- **Method**: `GET`
-- **Path**: `/reciter`
-- **Response**:
-
+**Response `200 OK`**:
 ```json
 [
   {
     "id": 1,
-    "name": "Abdul Basit Murattal",
-    "subfolder": "Abdul_Basit_Murattal_192kbps",
-    "bitrate": "192kbps",
-    "style": "murattal",
-    "createdAt": "2026-03-17T03:09:38.466Z",
-    "updatedAt": "2026-03-17T03:09:38.466Z"
+    "slug": "bukhari",
+    "name": "Shahih Al-Bukhari",
+    "arabicName": "صحيح البخاري",
+    "author": "Imam Bukhari",
+    "totalHadith": 7008,
+    "availableHadiths": 6986
+  },
+  {
+    "id": 2,
+    "slug": "muslim",
+    "name": "Shahih Muslim",
+    "arabicName": "صحيح مسلم",
+    "author": "Imam Muslim",
+    "totalHadith": 5362,
+    "availableHadiths": 3022
   }
 ]
 ```
 
-#### 8. Get Single Reciter
+#### `GET /hadith/search`
+Global search across all 7 Hadith collections (29,187 records) by Indonesian translation or Arabic text.
 
-- **Method**: `GET`
-- **Path**: `/reciter/:id`
-- **Response**: Single reciter object.
+- **Query Parameters**:
+  - `q` *(required)*: Search keyword (e.g. `?q=puasa`)
+  - `book` *(optional)*: Filter by specific book slug(s), comma-separated (e.g. `?book=bukhari,muslim`)
+  - `page` *(optional, default: 1)*: Page number
+  - `limit` *(optional, default: 20, max: 100)*: Items per page
 
-## Database Scripts
+**Response `200 OK`**:
+```json
+{
+  "query": "puasa",
+  "pagination": {
+    "page": 1,
+    "limit": 20,
+    "total": 1138,
+    "totalPages": 57,
+    "hasNext": true,
+    "hasPrev": false
+  },
+  "results": [
+    {
+      "id": 8,
+      "bookId": 1,
+      "bookSlug": "bukhari",
+      "bookName": "Shahih Al-Bukhari",
+      "number": 8,
+      "kitabNo": 2,
+      "kitabName": "Kitab Iman",
+      "babNo": 1,
+      "babName": "Bab Perkataan Nabi ﷺ: Islam dibangun di atas lima (dasar)",
+      "grade": "Shahih",
+      "arabic": "حَدَّثَنَا عُبَيْدُ اللَّهِ بْنُ مُوسَى...",
+      "translation": "Islam dibangun di atas lima (pokok): 1. Bersaksi bahwa tidak ada tuhan selain Allah... dan puasa Ramadhan."
+    }
+  ]
+}
+```
 
-- `bun run db:push` - Sync schema changes to PostgreSQL
-- `bun run db:generate` - Generate SQL migration files
-- `bun run db:studio` - Open Drizzle Studio UI to view database
+#### `GET /hadith/:bookSlug`
+Paginated browsing and keyword search within a specific Hadith book.
 
-## API Reference
+- **Query Parameters**:
+  - `page` *(optional, default: 1)*: Page number
+  - `limit` *(optional, default: 20, max: 100)*: Items per page
+  - `kitab` *(optional)*: Filter by Kitab / Chapter number (e.g. `?kitab=1`)
+  - `search` *(optional)*: Filter by keyword in translation or Arabic (e.g. `?search=niat`)
 
-Base URL: `http://localhost:3000`
+**Response `200 OK`**:
+```json
+{
+  "book": {
+    "id": 1,
+    "slug": "bukhari",
+    "name": "Shahih Al-Bukhari",
+    "author": "Imam Bukhari"
+  },
+  "pagination": {
+    "page": 1,
+    "limit": 20,
+    "total": 192,
+    "totalPages": 10,
+    "hasNext": true,
+    "hasPrev": false
+  },
+  "hadiths": [
+    {
+      "id": 1,
+      "bookId": 1,
+      "number": 1,
+      "kitabNo": 1,
+      "kitabName": "Kitab Permulaan Wahyu",
+      "babNo": 1,
+      "babName": "Bab Bagaimana Permulaan Wahyu kepada Rasulullah ﷺ",
+      "grade": "Shahih",
+      "arabic": "حَدَّثَنَا الْحُمَيْدِيُّ عَبْدُ اللَّهِ بْنُ الزُّبَيْرِ...",
+      "latin": "haddatsana alhumaydiyyu abdu allahi ibnu azzubayri...",
+      "translation": "Dari Umar bin Al-Khattab: Saya mendengar Rasulullah ﷺ bersabda, \"Sesungguhnya amal itu tergantung pada niat...\""
+    }
+  ]
+}
+```
 
-| Method | Endpoint                            | Description                                        |
-| ------ | ----------------------------------- | -------------------------------------------------- |
-| `GET`  | `/surah`                            | List all 114 Surahs                                |
-| `GET`  | `/surah/:id`                        | Get a single Surah by ID                           |
-| `GET`  | `/ayah/:surahId`                    | Get all Ayahs for a Surah (ordered by ayah number) |
-| `GET`  | `/ayah/:surahId/:ayahNumber/tafsir` | Get Tafsir for a specific Ayah                     |
+#### `GET /hadith/:bookSlug/:number`
+Fetch a single Hadith by its collection slug and number.
+
+**Response `200 OK`**:
+```json
+{
+  "book": {
+    "id": 2,
+    "slug": "muslim",
+    "name": "Shahih Muslim",
+    "arabicName": "صحيح مسلم",
+    "author": "Imam Muslim"
+  },
+  "hadith": {
+    "id": 6987,
+    "number": 1,
+    "kitabNo": 1,
+    "kitabName": "Mukadimah",
+    "babNo": 1,
+    "babName": "Bab Peringatan dari Berbohong kepada Rasulullah ﷺ",
+    "grade": "Shahih",
+    "arabic": "حَدَّثَنَا أَبُو بَكْرِ بْنُ أَبِي شَيْبَةَ...",
+    "latin": "haddatsana abu bakri bnu abi syaybata...",
+    "translation": "Abu Bakr bin Abi Shaybah meriwayatkan kepada kami bahwa Ghundar meriwayatkan kepada kami..."
+  }
+}
+```
+
+#### `GET /hadith/random`
+Fetch a random Hadith (ideal for daily quotes / widget features).
+
+- **Query Parameters**:
+  - `book` *(optional)*: Filter by collection slug (e.g. `/hadith/random?book=bukhari`)
 
 ---
 
-## How It Works
+### 5. Audio & Reciter Endpoints
 
+#### `GET /reciter`
+List all 40+ available audio reciters.
+
+**Response `200 OK`**:
+```json
+[
+  {
+    "id": 3,
+    "name": "Mishary Rashid Al-Afasy",
+    "subfolder": "Alafasy_128kbps",
+    "bitrate": "128kbps",
+    "style": "murattal"
+  }
+]
 ```
-User opens HomeView
-  └─> Fetches GET /surah → renders 114 surah cards
-      └─> User clicks a Surah → navigates to /surah/:id
-          └─> SurahView fetches GET /ayah/:surahId
-              └─> PageFlip renders each Ayah as a page
-                  ├─ Desktop: 2-page spread (left + right)
-                  └─ Mobile (<768px): single-page mode
 
-Audio (everyayah.com CDN):
-  └─> Play button → plays left page ayah
-      └─> On end (two-page mode): plays right page ayah (no flip)
-          └─> On end (continuous): flips to next spread → repeats
+#### `GET /audio/surah/:surahId`
+Get the playlist of verse audio URLs for an entire Surah or batch range.
 
-Tafsir:
-  └─> Book icon in bottom bar → opens drawer
-      └─> Separate button per page in two-page mode
-          └─> Always shows the correct ayah (validated by index)
+- **Query Parameters**:
+  - `reciterId` *(optional, default: Alafasy)*: Reciter ID from `/reciter`
+  - `from` *(optional, default: 1)*: Start verse number (e.g. `?from=1`)
+  - `to` *(optional, default: numAyah)*: End verse number (e.g. `?to=20`)
+
+**Response `200 OK`**:
+```json
+{
+  "surahId": 1,
+  "reciterId": 47,
+  "from": 1,
+  "to": 7,
+  "totalAyahs": 7,
+  "audioUrls": [
+    "https://everyayah.com/data/Alafasy_128kbps/001001.mp3",
+    "https://everyayah.com/data/Alafasy_128kbps/001002.mp3",
+    "https://everyayah.com/data/Alafasy_128kbps/001003.mp3"
+  ]
+}
+```
+
+#### `GET /audio/surah/:surahId/:ayahNumber`
+Get direct audio URL for a single verse.
+
+---
+
+## 🗄 Database Schema Overview
+
+```mermaid
+erDiagram
+    SURAH ||--o{ AYAH : contains
+    HADITH_BOOK ||--o{ HADITH : contains
+
+    SURAH {
+        int id PK
+        varchar surah_name
+        varchar arabic
+        varchar latin
+        varchar transliteration
+        varchar translation
+        int num_ayah
+        int page
+        varchar location
+    }
+
+    AYAH {
+        int id PK
+        int surah_id FK
+        int ayah_number
+        int page
+        int juz
+        text arabic
+        text latin
+        text translation
+        text footnote
+        text wajiz_tafsir
+        text tahlili_tafsir
+    }
+
+    HADITH_BOOK {
+        int id PK
+        varchar slug UK
+        varchar name
+        varchar arabic_name
+        varchar author
+        int total_hadith
+    }
+
+    HADITH {
+        int id PK
+        int book_id FK
+        int number
+        int kitab_no
+        text kitab_name
+        int bab_no
+        text bab_name
+        varchar grade
+        text arabic
+        text latin
+        text translation
+    }
+
+    RECITER {
+        int id PK
+        varchar name
+        varchar subfolder
+        varchar bitrate
+        varchar style
+    }
 ```
 
 ---
+
+## 📜 Useful Scripts
+
+- `bun run dev` — Start Elysia development server with hot reload
+- `bun run db:push` — Sync Drizzle schema changes directly to PostgreSQL
+- `bun run db:generate` — Generate SQL migration files
+- `bun run db:studio` — Open Drizzle Studio visual web manager
+- `bun run seed` — Populate all database tables from local `data/` files
+- `bun run scrape` — Scrape Quran text and tafsir
+- `bun run scrape:pages` — Scrape Kemenag Mushaf page images
+- `bun run scrape:hadith` — Scrape Hadith collections from `hadits.id`
+
+---
+
+## 📄 License
+
+MIT License. Open source and free for non-commercial and educational Islamic applications.

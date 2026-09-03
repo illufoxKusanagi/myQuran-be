@@ -2,15 +2,44 @@ import { Elysia, t } from 'elysia';
 import { getDatabase } from '../../database';
 import { table } from '../../database/schema';
 import { db } from '../../database/model';
-import { eq, asc } from 'drizzle-orm';
+import { eq, ilike, asc } from 'drizzle-orm';
 
 const database = getDatabase();
+
+async function resolveReciter(reciterId?: number) {
+  if (reciterId) {
+    const result = await database
+      .select({ id: table.reciter.id, subfolder: table.reciter.subfolder })
+      .from(table.reciter)
+      .where(eq(table.reciter.id, reciterId))
+      .limit(1);
+    return result[0] ?? null;
+  }
+
+  // Default to Alafasy, or fallback to the first available reciter
+  const alafasy = await database
+    .select({ id: table.reciter.id, subfolder: table.reciter.subfolder })
+    .from(table.reciter)
+    .where(ilike(table.reciter.name, '%alafasy%'))
+    .orderBy(asc(table.reciter.id))
+    .limit(1);
+
+  if (alafasy.length > 0) return alafasy[0];
+
+  const first = await database
+    .select({ id: table.reciter.id, subfolder: table.reciter.subfolder })
+    .from(table.reciter)
+    .orderBy(asc(table.reciter.id))
+    .limit(1);
+
+  return first[0] ?? null;
+}
 
 export const audioRoutes = new Elysia()
   .get(
     '/reciter',
     async () => {
-      return await database.select().from(table.reciter).orderBy(asc(table.reciter.id));
+      return database.select().from(table.reciter);
     },
     {
       response: t.Array(db.select.reciter),
@@ -54,29 +83,47 @@ export const audioRoutes = new Elysia()
         return { error: `Surah with ID ${params.surahId} not found` };
       }
 
-      const reciterId = query.reciterId ?? 3;
-      const reciterResult = await database
-        .select({ subfolder: table.reciter.subfolder })
-        .from(table.reciter)
-        .where(eq(table.reciter.id, reciterId));
-
-      if (reciterResult.length === 0) {
+      const reciter = await resolveReciter(query.reciterId);
+      if (!reciter) {
         set.status = 404;
-        return { error: `Reciter with ID ${reciterId} not found` };
+        return {
+          error: query.reciterId
+            ? `Reciter with ID ${query.reciterId} not found`
+            : 'No reciters found in database',
+        };
       }
 
-      const subfolder = reciterResult[0].subfolder;
+      const startAyah = Math.max(1, query.from ?? 1);
+      const endAyah = Math.min(
+        surahResult[0].numAyah,
+        query.to ?? surahResult[0].numAyah
+      );
+
+      if (startAyah > endAyah) {
+        set.status = 400;
+        return {
+          error: `'from' (${startAyah}) cannot be greater than 'to' (${endAyah})`,
+        };
+      }
+
+      const subfolder = reciter.subfolder;
       const surahNumPadded = String(params.surahId).padStart(3, '0');
 
-      const urls = Array.from({ length: surahResult[0].numAyah }, (_, i) => {
-        const ayahNumPadded = String(i + 1).padStart(3, '0');
-        return `https://everyayah.com/data/${subfolder}/${surahNumPadded}${ayahNumPadded}.mp3`;
-      });
+      const urls = Array.from(
+        { length: endAyah - startAyah + 1 },
+        (_, i) => {
+          const ayahNum = startAyah + i;
+          const ayahNumPadded = String(ayahNum).padStart(3, '0');
+          return `https://everyayah.com/data/${subfolder}/${surahNumPadded}${ayahNumPadded}.mp3`;
+        }
+      );
 
       return {
         surahId: params.surahId,
-        reciterId,
-        totalAyahs: surahResult[0].numAyah,
+        reciterId: reciter.id,
+        from: startAyah,
+        to: endAyah,
+        totalAyahs: urls.length,
         audioUrls: urls,
       };
     },
@@ -86,22 +133,22 @@ export const audioRoutes = new Elysia()
       }),
       query: t.Object({
         reciterId: t.Optional(t.Number({ minimum: 1 })),
+        from: t.Optional(t.Number({ minimum: 1 })),
+        to: t.Optional(t.Number({ minimum: 1 })),
       }),
-      response: t.Any(),
     }
   )
   .get(
     '/audio/surah/:surahId/:ayahNumber',
     async ({ params, query, set }) => {
-      const reciterId = query.reciterId ?? 3;
-      const reciterResult = await database
-        .select({ subfolder: table.reciter.subfolder })
-        .from(table.reciter)
-        .where(eq(table.reciter.id, reciterId));
-
-      if (reciterResult.length === 0) {
+      const reciter = await resolveReciter(query.reciterId);
+      if (!reciter) {
         set.status = 404;
-        return { error: `Reciter with ID ${reciterId} not found` };
+        return {
+          error: query.reciterId
+            ? `Reciter with ID ${query.reciterId} not found`
+            : 'No reciters found in database',
+        };
       }
 
       const surahResult = await database
@@ -121,14 +168,14 @@ export const audioRoutes = new Elysia()
         };
       }
 
-      const subfolder = reciterResult[0].subfolder;
+      const subfolder = reciter.subfolder;
       const surahNumPadded = String(params.surahId).padStart(3, '0');
       const ayahNumPadded = String(params.ayahNumber).padStart(3, '0');
 
       return {
         surahId: params.surahId,
         ayahNumber: params.ayahNumber,
-        reciterId,
+        reciterId: reciter.id,
         audioUrl: `https://everyayah.com/data/${subfolder}/${surahNumPadded}${ayahNumPadded}.mp3`,
       };
     },
@@ -140,6 +187,5 @@ export const audioRoutes = new Elysia()
       query: t.Object({
         reciterId: t.Optional(t.Number({ minimum: 1 })),
       }),
-      response: t.Any(),
     }
   );

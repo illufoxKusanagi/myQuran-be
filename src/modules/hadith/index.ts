@@ -28,9 +28,6 @@ export const hadithRoutes = new Elysia({ prefix: '/hadith' })
         ...b,
         availableHadiths: countMap.get(b.id) || 0,
       }));
-    },
-    {
-      response: t.Any(),
     }
   )
   .get(
@@ -77,7 +74,6 @@ export const hadithRoutes = new Elysia({ prefix: '/hadith' })
       query: t.Object({
         book: t.Optional(t.String()),
       }),
-      response: t.Any(),
     }
   )
   .get(
@@ -93,7 +89,8 @@ export const hadithRoutes = new Elysia({ prefix: '/hadith' })
       const limit = query.limit ?? 20;
       const offset = (page - 1) * limit;
 
-      const searchTerm = `%${trimmedQuery}%`;
+      const escaped = trimmedQuery.replace(/[%_\\]/g, '\\$&');
+      const searchTerm = `%${escaped}%`;
       const conditions: SQL[] = [];
 
       const searchFilter = or(
@@ -155,6 +152,11 @@ export const hadithRoutes = new Elysia({ prefix: '/hadith' })
       const total = totalResult[0]?.count || 0;
       const totalPages = Math.ceil(total / limit);
 
+      set.headers['X-Total-Count'] = String(total);
+      set.headers['X-Total-Pages'] = String(totalPages);
+      set.headers['X-Current-Page'] = String(page);
+      set.headers['X-Per-Page'] = String(limit);
+
       return {
         query: trimmedQuery,
         pagination: {
@@ -175,7 +177,6 @@ export const hadithRoutes = new Elysia({ prefix: '/hadith' })
         page: t.Optional(t.Number({ minimum: 1, default: 1 })),
         limit: t.Optional(t.Number({ minimum: 1, maximum: 100, default: 20 })),
       }),
-      response: t.Any(),
     }
   )
   .get(
@@ -205,7 +206,8 @@ export const hadithRoutes = new Elysia({ prefix: '/hadith' })
       if (query.search) {
         const trimmed = query.search.trim();
         if (trimmed.length > 0) {
-          const searchTerm = `%${trimmed}%`;
+          const escaped = trimmed.replace(/[%_\\]/g, '\\$&');
+          const searchTerm = `%${escaped}%`;
           const searchFilter = or(
             ilike(table.hadith.translation, searchTerm),
             ilike(table.hadith.arabic, searchTerm)
@@ -235,6 +237,11 @@ export const hadithRoutes = new Elysia({ prefix: '/hadith' })
       const total = totalResult[0]?.count || 0;
       const totalPages = Math.ceil(total / limit);
 
+      set.headers['X-Total-Count'] = String(total);
+      set.headers['X-Total-Pages'] = String(totalPages);
+      set.headers['X-Current-Page'] = String(page);
+      set.headers['X-Per-Page'] = String(limit);
+
       return {
         book: book[0],
         pagination: {
@@ -258,7 +265,6 @@ export const hadithRoutes = new Elysia({ prefix: '/hadith' })
         kitab: t.Optional(t.Number({ minimum: 1 })),
         search: t.Optional(t.String({ minLength: 1, maxLength: 200 })),
       }),
-      response: t.Any(),
     }
   )
   .get(
@@ -305,6 +311,5 @@ export const hadithRoutes = new Elysia({ prefix: '/hadith' })
         bookSlug: t.String({ minLength: 1 }),
         number: t.Number({ minimum: 1 }),
       }),
-      response: t.Any(),
     }
   );

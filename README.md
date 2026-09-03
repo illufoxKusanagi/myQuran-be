@@ -71,6 +71,12 @@ bun run dev
 ```
 The API is live at **`http://localhost:3000`**.
 
+### 6. Run Integration Test Suite
+```bash
+bun test
+```
+*Executes all 20 end-to-end integration tests verifying Quran, Hadith, Mushaf, and Audio endpoints.*
+
 ---
 
 ## ⚙️ Scraper Commands
@@ -416,16 +422,20 @@ List all 40+ available audio reciters.
 ```
 
 #### `GET /audio/surah/:surahId`
-Get the playlist of verse audio URLs for an entire Surah.
+Get the playlist of verse audio URLs for an entire Surah or batch range.
 
 - **Query Parameters**:
-  - `reciterId` *(optional, default: 3 - Mishary Alafasy)*
+  - `reciterId` *(optional, default: Alafasy)*: Reciter ID from `/reciter`
+  - `from` *(optional, default: 1)*: Start verse number (e.g. `?from=1`)
+  - `to` *(optional, default: numAyah)*: End verse number (e.g. `?to=20`)
 
 **Response `200 OK`**:
 ```json
 {
   "surahId": 1,
-  "reciterId": 3,
+  "reciterId": 47,
+  "from": 1,
+  "to": 7,
   "totalAyahs": 7,
   "audioUrls": [
     "https://everyayah.com/data/Alafasy_128kbps/001001.mp3",

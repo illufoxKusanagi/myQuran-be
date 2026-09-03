@@ -51,7 +51,8 @@ export const quranRoutes = new Elysia()
       const page = query.page ?? 1;
       const limit = query.limit ?? 20;
       const offset = (page - 1) * limit;
-      const searchTerm = `%${trimmedQuery}%`;
+      const escapedQuery = trimmedQuery.replace(/[%_\\]/g, '\\$&');
+      const searchTerm = `%${escapedQuery}%`;
 
       const searchFilter = or(
         ilike(table.ayah.translation, searchTerm),
@@ -176,10 +177,11 @@ export const quranRoutes = new Elysia()
 
       const withTafsir = query.withTafsir ?? true;
 
-      // Pagination support (?page=1&limit=20)
-      if (query.limit) {
+      // Pagination support (?limit=20 or ?paginate=true)
+      const shouldPaginate = Boolean(query.limit || query.paginate);
+      if (shouldPaginate) {
         const page = query.page ?? 1;
-        const limit = query.limit;
+        const limit = query.limit ?? 20;
         const offset = (page - 1) * limit;
         const totalPages = Math.ceil(filteredTotal / limit);
 
@@ -225,8 +227,8 @@ export const quranRoutes = new Elysia()
         surahId: t.Number({ minimum: 1, maximum: 114 }),
       }),
       query: t.Object({
-        page: t.Optional(t.Number({ minimum: 1, default: 1 })),
-        limit: t.Optional(t.Number({ minimum: 1, maximum: 100 })),
+        page: t.Optional(t.Number({ minimum: 1 })),
+        limit: t.Optional(t.Number({ minimum: 1, maximum: 300 })),
         from: t.Optional(t.Number({ minimum: 1 })),
         to: t.Optional(t.Number({ minimum: 1 })),
         withTafsir: t.Optional(t.Boolean({ default: true })),

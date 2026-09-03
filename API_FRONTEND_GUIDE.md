@@ -274,7 +274,7 @@ GET /ayah/:surahId?page={page}&limit={limit}&from={from}&to={to}&withTafsir={boo
 | Parameter | Type | Required | Default | Description |
 | :--- | :--- | :--- | :--- | :--- |
 | `page` | `number` | No | `1` | Page number (requires `limit`). |
-| `limit` | `number` | No | — | Page size (min 1, max 100). |
+| `limit` | `number` | No | — | Page size (min 1, max 300). Supports fetching all 286 ayahs of Al-Baqarah in one request. |
 | `from` | `number` | No | — | Start verse number (e.g. `?from=1`). |
 | `to` | `number` | No | — | End verse number (e.g. `?to=20`). |
 | `withTafsir` | `boolean`| No | `true` | **Set `false` in reading views to cut payload by ~70%!** |
@@ -440,11 +440,33 @@ GET /reciter
 ```
 Returns list of 40+ verified reciters with `subfolder` and `bitrate`. Default reciter ID is `3` (Mishary Rashid Al-Afasy).
 
-### B. Surah Playlist
+### B. Surah Playlist & Range Batching
 ```http
-GET /audio/surah/:surahId?reciterId={reciterId}
+GET /audio/surah/:surahId?reciterId={reciterId}&from={from}&to={to}
 ```
-Returns an array of direct `.mp3` streaming URLs for every verse in the surah.
+Returns an array of direct `.mp3` streaming URLs for the surah. Supports range batching (e.g. `?from=1&to=20` for flipbook or batch players).
+
+| Parameter | Type | Required | Default | Description |
+| :--- | :--- | :--- | :--- | :--- |
+| `reciterId` | `number` | No | Alafasy | Reciter ID from `/reciter`. |
+| `from` | `number` | No | `1` | Start verse number. |
+| `to` | `number` | No | `numAyah` | End verse number. |
+
+**Response**:
+```json
+{
+  "surahId": 2,
+  "reciterId": 47,
+  "from": 1,
+  "to": 20,
+  "totalAyahs": 20,
+  "audioUrls": [
+    "https://everyayah.com/data/Alafasy_128kbps/002001.mp3",
+    "https://everyayah.com/data/Alafasy_128kbps/002002.mp3",
+    "..."
+  ]
+}
+```
 
 ### C. Single Verse Audio
 ```http

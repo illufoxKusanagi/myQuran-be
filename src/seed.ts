@@ -232,9 +232,9 @@ async function seed() {
           batch.map((h) => ({
             bookId: book.id,
             number: h.number,
-            kitabNo: h.kitabNo || null,
+            kitabNo: h.kitabNo ?? null,
             kitabName: h.kitabName || null,
-            babNo: h.babNo || null,
+            babNo: h.babNo ?? null,
             babName: h.babName || null,
             grade: h.grade || null,
             arabic: h.arabic,
